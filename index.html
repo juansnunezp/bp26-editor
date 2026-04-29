@@ -1557,7 +1557,6 @@ async function runFFmpegExport(mode, filename) {
     setRecordingState(true, 'LOADING 6K ENCODER...');
 
     try {
-        var { fetchFile } = FFmpegUtil;
 
         // Write frames one at a time directly to ffmpeg filesystem — no memory accumulation
         for (var frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
