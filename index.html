@@ -89,7 +89,7 @@
         /* CHANGE: 4-button lighting row — tighter font/padding */
         .lighting-btn { padding: 8px 2px !important; font-size: 9px !important; }
     </style>
-    <script src="/ffmpeg/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 </head>
 <body class="mode-image">
 <div class="sidebar">
@@ -727,12 +727,9 @@ var ffmpegReady = false;
 
 async function loadFFmpeg() {
     try {
-        var FFmpegClass = window.FFmpegWASM.FFmpeg;
-        ffmpegInstance = new FFmpegClass();
-        await ffmpegInstance.load({
-            coreURL: '/ffmpeg/ffmpeg-core.js',
-            wasmURL: '/ffmpeg/ffmpeg-core.wasm',
-        });
+        var { createFFmpeg } = FFmpeg;
+        ffmpegInstance = createFFmpeg({ log: false });
+        await ffmpegInstance.load();
         ffmpegReady = true;
         console.log('ffmpeg ready');
     } catch(e) {
@@ -1601,7 +1598,7 @@ async function runFFmpegExport(mode, filename) {
             });
 
             var frameName = 'frame' + String(frameIndex).padStart(4, '0') + '.png';
-            await ffmpegInstance.writeFile(frameName, frameData);
+            ffmpegInstance.FS('writeFile', frameName, frameData);
 
             var pct = Math.round(((frameIndex + 1) / totalFrames) * 80); // 0-80% for render phase
             setRecordingState(true, 'RENDERING 6K — ' + pct + '%');
@@ -1610,18 +1607,10 @@ async function runFFmpegExport(mode, filename) {
         // Encode all frames to mp4
         setRecordingState(true, 'ENCODING 6K VIDEO — PLEASE WAIT...');
 
-        await ffmpegInstance.exec([
-            '-framerate', String(FPS),
-            '-i', 'frame%04d.png',
-            '-c:v', 'libx264',
-            '-pix_fmt', 'yuv420p',
-            '-crf', '18',
-            '-preset', 'fast',
-            'output.mp4'
-        ]);
+        await ffmpegInstance.run('-framerate', String(FPS), '-i', 'frame%04d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'fast', 'output.mp4');
 
         // Read and download the output
-        var outputData = await ffmpegInstance.readFile('output.mp4');
+        var outputData = ffmpegInstance.FS('readFile', 'output.mp4');
         var blob = new Blob([outputData.buffer], { type: 'video/mp4' });
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
@@ -1633,9 +1622,9 @@ async function runFFmpegExport(mode, filename) {
         // Clean up ffmpeg filesystem
         for (var fi = 0; fi < totalFrames; fi++) {
             var fn = 'frame' + String(fi).padStart(4, '0') + '.png';
-            try { await ffmpegInstance.deleteFile(fn); } catch(e) {}
+            try { ffmpegInstance.FS('unlink', fn); } catch(e) {}
         }
-        try { await ffmpegInstance.deleteFile('output.mp4'); } catch(e) {}
+        try { ffmpegInstance.FS('unlink', 'output.mp4'); } catch(e) {}
 
     } catch(err) {
         console.error('ffmpeg export error:', err);
