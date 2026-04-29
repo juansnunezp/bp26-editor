@@ -715,28 +715,17 @@ var ffmpegReady = false;
 
 async function loadFFmpeg() {
     try {
-        setRecordingState(true, 'LOADING 6K ENCODER...');
-        // UMD builds expose globals differently — check what's available
-        var FFmpegLib = window.FFmpegWASM || window.FFmpeg;
-        var FFmpegClass = FFmpegLib.FFmpeg || FFmpegLib;
-        ffmpegInstance = new FFmpegClass();
-        var { toBlobURL } = window.FFmpegUtil || window.FFmpegWASMUtil || {};
-        if (toBlobURL) {
-            await ffmpegInstance.load({
-                coreURL: '/ffmpeg/ffmpeg-core.js',
-                wasmURL: '/ffmpeg/ffmpeg-core.wasm',
-            });
-        } else {
-            await ffmpegInstance.load();
-        }
+        var { FFmpeg } = window.FFmpegWASM || window.FFmpeg || {};
+        ffmpegInstance = new FFmpeg();
+        await ffmpegInstance.load({
+            coreURL: '/ffmpeg/ffmpeg-core.js',
+            wasmURL: '/ffmpeg/ffmpeg-core.wasm',
+        });
         ffmpegReady = true;
-        setRecordingState(false);
         console.log('ffmpeg ready');
     } catch(e) {
         console.error('ffmpeg load error:', e);
         ffmpegReady = false;
-        setRecordingState(false);
-        alert('6K encoder failed to load: ' + e.message);
     }
 }
 loadFFmpeg();
