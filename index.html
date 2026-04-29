@@ -89,6 +89,8 @@
         /* CHANGE: 4-button lighting row — tighter font/padding */
         .lighting-btn { padding: 8px 2px !important; font-size: 9px !important; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 </head>
 <body class="mode-image">
 <div class="sidebar">
@@ -238,8 +240,6 @@
                 <div class="swatch active" style="background:#AA67FB;" data-color="170,103,251" onclick="setSwatch('tint',this,'tintColors')"></div>
                 <div class="swatch" style="background:#3C91FF;" data-color="60,145,255" onclick="setSwatch('tint',this,'tintColors')"></div>
                 <div class="swatch" style="background:#14F195;" data-color="20,241,149" onclick="setSwatch('tint',this,'tintColors')"></div>
-                <div class="swatch" style="background:#C0E021;" data-color="192,224,33" onclick="setSwatch('tint',this,'tintColors')"></div>
-                <div class="swatch" style="background:#E65DDB;" data-color="230,93,219" onclick="setSwatch('tint',this,'tintColors')"></div>
             </div>
         </div>
 
@@ -295,6 +295,7 @@
             <div style="display:flex;gap:0;border:1px solid var(--border-color);border-radius:2px;overflow:hidden;">
                 <button id="vres-1080" class="mode-btn active" style="padding:4px 10px;font-size:9px;letter-spacing:1px;" onclick="setVideoResolution('1080p')">1080P</button>
                 <button id="vres-4k"   class="mode-btn"        style="padding:4px 10px;font-size:9px;letter-spacing:1px;" onclick="setVideoResolution('4k')">4K</button>
+                <button id="vres-6k"   class="mode-btn"        style="padding:4px 10px;font-size:9px;letter-spacing:1px;" onclick="setVideoResolution('6k')">6K</button>
             </div>
         </div>
         <div class="btn btn-export" style="background:var(--accent);color:#000;border:none;margin-bottom:6px;" onclick="exportVideoSelected()">EXPORT</div>
@@ -362,6 +363,7 @@ function setVideoResolution(res) {
     videoResolution = res;
     document.getElementById('vres-1080').classList.toggle('active', res === '1080p');
     document.getElementById('vres-4k').classList.toggle('active', res === '4k');
+    document.getElementById('vres-6k').classList.toggle('active', res === '6k');
 }
 
 // Video export type selection
@@ -707,6 +709,26 @@ function initBlank() {
     ctx.fillStyle = '#111'; ctx.fillRect(0, 0, 800, 600);
 }
 initBlank();
+
+// Load ffmpeg.wasm in background so it's ready when user exports
+var ffmpegInstance = null;
+var ffmpegReady = false;
+
+async function loadFFmpeg() {
+    try {
+        setRecordingState(true, 'LOADING 6K ENCODER...');
+        var { FFmpeg } = FFmpegWASM;
+        ffmpegInstance = new FFmpeg();
+        await ffmpegInstance.load();
+        ffmpegReady = true;
+        setRecordingState(false);
+    } catch(e) {
+        console.warn('ffmpeg.wasm failed to load:', e);
+        ffmpegReady = false;
+        setRecordingState(false);
+    }
+}
+loadFFmpeg();
 
 var canvasContainer = document.querySelector('.canvas-container');
 var uploadZone = document.createElement('div');
@@ -1327,7 +1349,14 @@ function runCCaptureExport(mode, filename) {
     var srcH = src.naturalHeight || src.height;
 
     // Determine target resolution from source aspect ratio
-    var targetH = videoResolution === '4k' ? 2160 : 1080;
+    var targetH = videoResolution === '6k' ? 3240 : videoResolution === '4k' ? 2160 : 1080;
+
+    // Route 6K through ffmpeg.wasm for frame-by-frame encoding (avoids memory crash)
+    if (videoResolution === '6k') {
+        runFFmpegExport(mode, filename);
+        return;
+    }
+
     var aspect  = srcW / srcH;
     var targetW = Math.round(targetH * aspect);
     targetW = targetW % 2 === 0 ? targetW : targetW + 1;
@@ -1458,6 +1487,152 @@ function runCCaptureExport(mode, filename) {
     }
 
     window.setTimeout(renderNextFrame,0);
+}
+
+async function runFFmpegExport(mode, filename) {
+    if (!state.baseImg) { alert("Upload an image first!"); return; }
+
+    if (!ffmpegReady || !ffmpegInstance) {
+        setRecordingState(true, 'WAITING FOR 6K ENCODER...');
+        var waitInterval = setInterval(function() {
+            if (ffmpegReady && ffmpegInstance) {
+                clearInterval(waitInterval);
+                setRecordingState(false);
+                runFFmpegExport(mode, filename);
+            }
+        }, 500);
+        return;
+    }
+
+    var src = state.fullResSource || state.baseImg;
+    var srcW = src.naturalWidth || src.width;
+    var srcH = src.naturalHeight || src.height;
+
+    // 6K target
+    var targetH = 3240;
+    var aspect = srcW / srcH;
+    var targetW = Math.round(targetH * aspect);
+    targetW = targetW % 2 === 0 ? targetW : targetW + 1;
+    if (targetW > srcW || targetH > srcH) { targetW = srcW; targetH = srcH; }
+
+    // Build offscreen export canvases
+    var ec = {
+        w: targetW, h: targetH, src: src,
+        main: document.createElement('canvas'), base: document.createElement('canvas'),
+        tint: document.createElement('canvas'), disp: document.createElement('canvas')
+    };
+    ['main','base','tint','disp'].forEach(function(k){ ec[k].width=targetW; ec[k].height=targetH; });
+    ec.ctx  = ec.main.getContext('2d', {willReadFrequently:true});
+    ec.bCtx = ec.base.getContext('2d', {willReadFrequently:true});
+    ec.tCtx = ec.tint.getContext('2d', {willReadFrequently:true});
+    ec.dCtx = ec.disp.getContext('2d', {willReadFrequently:true});
+
+    // Init glitches at export size
+    var savedW = canvas.width, savedH = canvas.height;
+    canvas.width = targetW; canvas.height = targetH;
+    initVideoGlitches();
+    var exportGlitches = animGlitches.map(function(g) {
+        var ng = Object.assign({}, g);
+        if (g.slices) ng.slices = g.slices.map(function(s) { return Object.assign({}, s); });
+        return ng;
+    });
+    canvas.width = savedW; canvas.height = savedH;
+    initVideoGlitches();
+
+    var FPS = 30;
+    var totalFrames = Math.round((exportDuration / 1000) * FPS);
+    var orig = Object.assign({}, state);
+    var spd = state.animSpeed;
+    var sc2 = Math.max(targetW, targetH) / REF_SIZE;
+
+    setRecordingState(true, 'LOADING 6K ENCODER...');
+
+    try {
+        var { fetchFile } = FFmpegUtil;
+
+        // Write frames one at a time directly to ffmpeg filesystem — no memory accumulation
+        for (var frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+            var p  = frameIndex / Math.max(totalFrames - 1, 1);
+            var ep = mode === 'heal' ? Math.pow(1 - p, 2) : 1;
+            if (mode === 'heal' && p > 0.95) state.showEffect = false;
+
+            // Set shift for this frame
+            state.xShift = orig.xShift;
+            state.yShift = orig.yShift;
+            if (mode === 'heal') { state.xShift = orig.xShift * ep; state.yShift = orig.yShift * ep; }
+            else if (mode === 'displace') { var eased = p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2; state.xShift=100+(eased*-200); state.yShift=-100+(eased*200); }
+            else if (mode === 'chaos') { if(Math.random()>(0.5/Math.max(0.1,state.animSpeed))){ state.xShift=orig.xShift+(Math.random()-0.5)*80; state.yShift=orig.yShift+(Math.random()-0.5)*80; } }
+
+            // Step glitch state
+            for (var gi = 0; gi < exportGlitches.length; gi++) {
+                var g = exportGlitches[gi];
+                g.timer -= spd;
+                if (g.timer <= 0) {
+                    if (g.type==='tear') { g.targetOffsetX=(Math.random()-0.5)*state.shift*20*sc2; g.h=Math.max(2*sc2,(state.block*0.1+Math.random()*state.block*2.5)*sc2); }
+                    if (g.type==='smear') { g.targetStretch=Math.random()*state.shift*20*sc2; }
+                    g.timer = (2+Math.random()*10)/Math.max(0.1,spd);
+                }
+                g.offsetX += (g.targetOffsetX-g.offsetX)*g.speed*spd;
+                if (g.type==='smear') g.stretch += (g.targetStretch-g.stretch)*g.speed*spd;
+            }
+
+            // Render frame
+            runVideoExportPipeline(ec, orig, mode, p, ep, exportGlitches);
+
+            // Write frame as PNG to ffmpeg virtual filesystem
+            var frameData = await new Promise(function(resolve) {
+                ec.main.toBlob(function(blob) {
+                    blob.arrayBuffer().then(function(buf) {
+                        resolve(new Uint8Array(buf));
+                    });
+                }, 'image/png');
+            });
+
+            var frameName = 'frame' + String(frameIndex).padStart(4, '0') + '.png';
+            await ffmpegInstance.writeFile(frameName, frameData);
+
+            var pct = Math.round(((frameIndex + 1) / totalFrames) * 80); // 0-80% for render phase
+            setRecordingState(true, 'RENDERING 6K — ' + pct + '%');
+        }
+
+        // Encode all frames to mp4
+        setRecordingState(true, 'ENCODING 6K VIDEO — PLEASE WAIT...');
+
+        await ffmpegInstance.exec([
+            '-framerate', String(FPS),
+            '-i', 'frame%04d.png',
+            '-c:v', 'libx264',
+            '-pix_fmt', 'yuv420p',
+            '-crf', '18',
+            '-preset', 'fast',
+            'output.mp4'
+        ]);
+
+        // Read and download the output
+        var outputData = await ffmpegInstance.readFile('output.mp4');
+        var blob = new Blob([outputData.buffer], { type: 'video/mp4' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename + '-6k-' + Date.now() + '.mp4';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+
+        // Clean up ffmpeg filesystem
+        for (var fi = 0; fi < totalFrames; fi++) {
+            var fn = 'frame' + String(fi).padStart(4, '0') + '.png';
+            try { await ffmpegInstance.deleteFile(fn); } catch(e) {}
+        }
+        try { await ffmpegInstance.deleteFile('output.mp4'); } catch(e) {}
+
+    } catch(err) {
+        console.error('ffmpeg export error:', err);
+        alert('6K export failed: ' + err.message);
+    }
+
+    Object.assign(state, orig);
+    initVideoGlitches(); processBaseEffects();
+    setRecordingState(false); requestPipeline();
 }
 
 function exportVideoHeal()        { runCCaptureExport('heal',     'glitch-to-base'); }
