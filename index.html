@@ -239,7 +239,10 @@
                 <div class="swatch active" style="background:#AA67FB;" data-color="170,103,251" onclick="setSwatch('tint',this,'tintColors')"></div>
                 <div class="swatch" style="background:#3C91FF;" data-color="60,145,255" onclick="setSwatch('tint',this,'tintColors')"></div>
                 <div class="swatch" style="background:#14F195;" data-color="20,241,149" onclick="setSwatch('tint',this,'tintColors')"></div>
+                <div class="swatch" style="background:#C0E021;" data-color="192,224,33" onclick="setSwatch('tint',this,'tintColors')"></div>
+                <div class="swatch" style="background:#E65DDB;" data-color="230,93,219" onclick="setSwatch('tint',this,'tintColors')"></div>
             </div>
+            <div style="font-size:9px;color:var(--text-muted);margin-top:6px;letter-spacing:0.5px;">● Purple, blue &amp; green are primary brand colors</div>
         </div>
 
         <!-- 5. HEADSHOT -->
@@ -592,8 +595,17 @@ function setPreviewMode(isAnimated) {
     document.body.classList.toggle('mode-video', isAnimated);
     document.getElementById('prev-off').classList.toggle('active', !isAnimated);
     document.getElementById('prev-on').classList.toggle('active', isAnimated);
-    if (isAnimated) { initVideoGlitches(); if (state.baseImg) processBaseEffects(); startAnimationLoop(); }
-    else { initVideoGlitches(); requestPipeline(); }
+    if (isAnimated) {
+        initVideoGlitches();
+        if (state.baseImg) {
+            processBaseEffects();
+            isAnimLoopRunning = false; // force restart
+            startAnimationLoop();
+        }
+    } else {
+        initVideoGlitches();
+        requestPipeline();
+    }
 }
 
 function setHeadshotMode(enabled) {
@@ -715,8 +727,29 @@ var ffmpegReady = false;
 
 async function loadFFmpeg() {
     try {
-        var { FFmpeg } = window.FFmpegWASM || window.FFmpeg || {};
-        ffmpegInstance = new FFmpeg();
+        // Try all possible global names the UMD build might expose
+        var FFmpegClass = null;
+        if (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) {
+            FFmpegClass = window.FFmpegWASM.FFmpeg;
+        } else if (window.FFmpeg && window.FFmpeg.FFmpeg) {
+            FFmpegClass = window.FFmpeg.FFmpeg;
+        } else if (window.FFmpeg && typeof window.FFmpeg === 'function') {
+            FFmpegClass = window.FFmpeg;
+        } else if (window.createFFmpeg) {
+            // 0.11.x API
+            ffmpegInstance = window.createFFmpeg({ log: true });
+            await ffmpegInstance.load();
+            ffmpegReady = true;
+            console.log('ffmpeg ready (0.11 API)');
+            return;
+        }
+
+        if (!FFmpegClass) {
+            console.error('ffmpeg global not found — check script loaded correctly');
+            return;
+        }
+
+        ffmpegInstance = new FFmpegClass();
         await ffmpegInstance.load({
             coreURL: '/ffmpeg/ffmpeg-core.js',
             wasmURL: '/ffmpeg/ffmpeg-core.wasm',
