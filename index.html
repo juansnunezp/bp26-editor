@@ -725,6 +725,12 @@ initBlank();
 var ffmpegInstance = null;
 var ffmpegReady = false;
 
+// Temporary debug — remove after fixing
+console.log('FFmpegWASM:', typeof window.FFmpegWASM);
+console.log('FFmpeg global:', typeof window.FFmpeg);
+console.log('createFFmpeg:', typeof window.createFFmpeg);
+console.log('FFmpegWASM keys:', window.FFmpegWASM ? Object.keys(window.FFmpegWASM) : 'undefined');
+
 async function loadFFmpeg() {
     try {
         // Try all possible global names the UMD build might expose
