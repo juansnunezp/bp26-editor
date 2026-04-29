@@ -725,36 +725,9 @@ initBlank();
 var ffmpegInstance = null;
 var ffmpegReady = false;
 
-// Temporary debug — remove after fixing
-console.log('FFmpegWASM:', typeof window.FFmpegWASM);
-console.log('FFmpeg global:', typeof window.FFmpeg);
-console.log('createFFmpeg:', typeof window.createFFmpeg);
-console.log('FFmpegWASM keys:', window.FFmpegWASM ? Object.keys(window.FFmpegWASM) : 'undefined');
-
 async function loadFFmpeg() {
     try {
-        // Try all possible global names the UMD build might expose
-        var FFmpegClass = null;
-        if (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) {
-            FFmpegClass = window.FFmpegWASM.FFmpeg;
-        } else if (window.FFmpeg && window.FFmpeg.FFmpeg) {
-            FFmpegClass = window.FFmpeg.FFmpeg;
-        } else if (window.FFmpeg && typeof window.FFmpeg === 'function') {
-            FFmpegClass = window.FFmpeg;
-        } else if (window.createFFmpeg) {
-            // 0.11.x API
-            ffmpegInstance = window.createFFmpeg({ log: true });
-            await ffmpegInstance.load();
-            ffmpegReady = true;
-            console.log('ffmpeg ready (0.11 API)');
-            return;
-        }
-
-        if (!FFmpegClass) {
-            console.error('ffmpeg global not found — check script loaded correctly');
-            return;
-        }
-
+        var FFmpegClass = window.FFmpegWASM.FFmpeg;
         ffmpegInstance = new FFmpegClass();
         await ffmpegInstance.load({
             coreURL: '/ffmpeg/ffmpeg-core.js',
