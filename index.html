@@ -108,19 +108,21 @@
              onmouseenter="showV2Tip()" onmouseleave="hideV2Tip()">
             <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--accent);border-radius:2px;cursor:default;">
                 <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
-                <span style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:1.5px;">V2</span>
+                <span style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:1.5px;">V3</span>
             </div>
             <div id="v2-tooltip" style="
                 display:none;position:absolute;left:0;top:calc(100% + 8px);
                 width:260px;background:#1a1a1a;border:1px solid var(--border-color);
                 border-radius:2px;padding:12px 14px;z-index:100;
                 box-shadow:0 8px 24px rgba(0,0,0,0.6);">
-                <div style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:2px;margin-bottom:10px;">WHAT'S NEW IN V2</div>
+                <div style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:2px;margin-bottom:10px;">WHAT'S NEW IN V3</div>
                 <div style="font-size:9px;color:var(--text-muted);line-height:2;">
                     <div><span style="color:var(--text-main);">High-res import &amp; export</span> — no pixel cap, 1x or 2x PNG at 300 PPI</div>
                     <div><span style="color:var(--text-main);">Glitch scales to image</span> — consistent look at any resolution</div>
                     <div><span style="color:var(--text-main);">Arch lighting</span> — high contrast preset for architecture shots</div>
-                    <div><span style="color:var(--text-main);">Video export</span> — choose type and duration (4s / 6s / 10s)</div>
+                    <div><span style="color:var(--text-main);">Video export</span> — type, duration (4s/6s/10s), 1080p, 4K or 6K</div>
+                    <div><span style="color:var(--text-main);">6K export</span> — browser-based encoding, est. 5–15 min, ideal for stage sign-off</div>
+<div><span style="color:var(--text-main);">Headshot layer</span> — composited correctly in all export modes</div>
                     <div><span style="color:var(--text-main);">P3 preset</span> — P1 at 50% intensity, 0.25 speed for animation</div>
                 </div>
                 <!-- little arrow pointing up -->
@@ -299,6 +301,7 @@
                 <button id="vres-4k"   class="mode-btn"        style="padding:4px 10px;font-size:9px;letter-spacing:1px;" onclick="setVideoResolution('4k')">4K</button>
                 <button id="vres-6k"   class="mode-btn"        style="padding:4px 10px;font-size:9px;letter-spacing:1px;" onclick="setVideoResolution('6k')">6K</button>
             </div>
+            <div id="res-note" style="font-size:9px;color:var(--text-muted);margin-bottom:6px;line-height:1.6;"></div>
         </div>
         <div class="btn btn-export" style="background:var(--accent);color:#000;border:none;margin-bottom:6px;" onclick="exportVideoSelected()">EXPORT</div>
         <div class="btn btn-export" style="background:var(--text-main);color:#000;border:none;" onclick="exportImage()">EXPORT CURRENT FRAME</div>
@@ -366,6 +369,14 @@ function setVideoResolution(res) {
     document.getElementById('vres-1080').classList.toggle('active', res === '1080p');
     document.getElementById('vres-4k').classList.toggle('active', res === '4k');
     document.getElementById('vres-6k').classList.toggle('active', res === '6k');
+    var note = document.getElementById('res-note');
+    if (res === '6k') {
+        note.innerText = '⚠️ 6K exports may take 5–15 min depending on your machine. Best for final sign-off.';
+    } else if (res === '4k') {
+        note.innerText = '4K recommended for quick iteration and most stage screen testing.';
+    } else {
+        note.innerText = '';
+    }
 }
 
 // Video export type selection
