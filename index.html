@@ -1604,7 +1604,12 @@ async function runFFmpegExport(mode, filename) {
         }
 
         // Encode all frames to mp4
-        setRecordingState(true, 'ENCODING 6K VIDEO — PLEASE WAIT...');
+        // Estimate ~1.5 seconds per frame for 6K encoding
+var estSeconds = Math.round(totalFrames * 1.5);
+var estMins = Math.floor(estSeconds / 60);
+var estSecs = estSeconds % 60;
+var estStr = estMins > 0 ? estMins + 'm ' + estSecs + 's' : estSecs + 's';
+setRecordingState(true, 'ENCODING 6K — EST. ' + estStr + ' REMAINING...');
 
         await ffmpegInstance.run('-framerate', String(FPS), '-i', 'frame%04d.png', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'fast', 'output.mp4');
 
