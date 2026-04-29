@@ -89,6 +89,7 @@
         /* CHANGE: 4-button lighting row — tighter font/padding */
         .lighting-btn { padding: 8px 2px !important; font-size: 9px !important; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 </head>
@@ -717,15 +718,28 @@ var ffmpegReady = false;
 async function loadFFmpeg() {
     try {
         setRecordingState(true, 'LOADING 6K ENCODER...');
-        var { FFmpeg } = FFmpegWASM;
-        ffmpegInstance = new FFmpeg();
-        await ffmpegInstance.load();
+        // UMD builds expose globals differently — check what's available
+        var FFmpegLib = window.FFmpegWASM || window.FFmpeg;
+        var FFmpegClass = FFmpegLib.FFmpeg || FFmpegLib;
+        ffmpegInstance = new FFmpegClass();
+        var baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+        var { toBlobURL } = window.FFmpegUtil || window.FFmpegWASMUtil || {};
+        if (toBlobURL) {
+            await ffmpegInstance.load({
+                coreURL: await toBlobURL(baseURL + '/ffmpeg-core.js', 'text/javascript'),
+                wasmURL: await toBlobURL(baseURL + '/ffmpeg-core.wasm', 'application/wasm'),
+            });
+        } else {
+            await ffmpegInstance.load();
+        }
         ffmpegReady = true;
         setRecordingState(false);
+        console.log('ffmpeg ready');
     } catch(e) {
-        console.warn('ffmpeg.wasm failed to load:', e);
+        console.error('ffmpeg load error:', e);
         ffmpegReady = false;
         setRecordingState(false);
+        alert('6K encoder failed to load: ' + e.message);
     }
 }
 loadFFmpeg();
