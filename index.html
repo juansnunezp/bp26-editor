@@ -926,12 +926,22 @@ function showTourStep(index) {
     highlight.style.height = (rect.height + pad*2) + 'px';
 
     var cardW = 220;
+    var cardH = 280;
     var cardLeft = rect.right + 16;
+    // If card goes off right edge, try left side
     if (cardLeft + cardW > window.innerWidth) cardLeft = rect.left - cardW - 16;
-    var cardTop = Math.max(10, rect.top - 10);
-    if (cardTop + 250 > window.innerHeight) cardTop = window.innerHeight - 260;
+    // If card still off screen, pin to right edge with margin
+    if (cardLeft < 0) cardLeft = 10;
+    // Vertical positioning — try to center on element
+    var cardTop = rect.top + (rect.height/2) - (cardH/2);
+    // Keep within viewport
+    cardTop = Math.max(10, cardTop);
+    if (cardTop + cardH > window.innerHeight) cardTop = window.innerHeight - cardH - 10;
+    if (cardTop < 0) cardTop = 10;
     card.style.left = cardLeft + 'px';
     card.style.top  = cardTop + 'px';
+    card.style.maxHeight = (window.innerHeight - 20) + 'px';
+    card.style.overflowY = 'auto';
 }
 
 showBannerIfFirstVisit();
