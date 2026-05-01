@@ -308,7 +308,7 @@
                 <input type="file" id="fgInput" accept="image/png" style="display:none;">
                 <div class="btn btn-upload" style="margin-bottom:8px;" onclick="document.getElementById('fgInput').click()">UPLOAD CUTOUT PNG (no bg)</div>
                 <div id="fg-loaded" style="display:none;font-size:9px;color:var(--accent);margin-bottom:8px;text-align:center;">✓ CUTOUT LOADED</div>
-                <div style="font-size:9px;color:var(--text-muted);line-height:1.6;">Overlay auto-matches theme — purple → light purple, blue → light blue, green → light green.</div>
+                <div style="font-size:9px;color:var(--text-muted);line-height:1.6;">Before uploading, remove the background and crop to 1:1 with the face centered, frame ending around mid-chest.<br><br>Overlay auto-matches theme — purple → light purple, blue → light blue, green → light green.</div>
                 <div class="motion-note">🎬 In Motion mode, the glitch BG animates while the FG subject stays sharp and static.</div>
             </div>
         </div>
@@ -702,6 +702,19 @@ function setHeadshotMode(enabled) {
         buildFGCanvas();
         document.getElementById('fg-loaded').style.display = 'block';
     }
+    // Hide yellow and pink swatches in Layered mode
+    document.querySelectorAll('#tintColors .swatch').forEach(function(s) {
+        var color = s.dataset.color;
+        if (color === '192,224,33' || color === '230,93,219') {
+            s.style.display = enabled ? 'none' : 'inline-block';
+            // If hidden swatch was active, reset to purple
+            if (enabled && s.classList.contains('active')) {
+                s.classList.remove('active');
+                var purple = document.querySelector('#tintColors .swatch[data-color="170,103,251"]');
+                if (purple) { purple.classList.add('active'); state.tint = '170,103,251'; updateTintCache(state.tint); requestPipeline(); }
+            }
+        }
+    });
     requestPipeline();
 }
 
