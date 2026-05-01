@@ -441,7 +441,7 @@
 
 <!-- TOUR OVERLAY -->
 <div id="tour-overlay">
-    <div id="tour-backdrop" onclick="endTour()"></div>
+    <div id="tour-backdrop" onclick="endTour()" style="display:none;"></div>
     <div id="tour-highlight" style="display:none;"></div>
     <div id="tour-card" style="display:none;">
         <div class="tour-step-label" id="tour-step-label">STEP 1 OF 5</div>
@@ -889,31 +889,31 @@ var tourSteps = [
         target: '#fileInput-wrap',
         fallback: '.btn-upload',
         title: 'UPLOAD YOUR ASSET',
-        desc: 'Start by uploading your image or video. For speaker headshots, remove the background first and crop to 1:1 with the face centered and frame ending around mid-chest.'
+        desc: 'Upload your image or video. For speaker headshots, remove the background first and crop to 1:1 with the face centered, frame ending around mid-chest. For architectural assets, light tones like materials or daytime sky will take on the selected color — dark tones like night sky will remain black.'
     },
     {
         target: '#panel-glitch-wrap',
         fallback: '.section-title',
         title: 'GLITCH PATTERN',
-        desc: 'Choose P1 or P2 and adjust intensity. The goal is to abstract the image while keeping enough human structure — hairline, shoulders, silhouette — so it still reads as a person.'
+        desc: 'For headshots, use P1 or P2 and adjust intensity. The goal is to abstract the image while keeping enough human structure — hairline, shoulders, silhouette — so it still reads as a person. For architectural shots, P3 is recommended for subtle, slower motion.'
     },
     {
         target: '#tintColors',
         fallback: '#tintColors',
         title: 'COLOR',
-        desc: 'Speaker headshots use Purple, Blue, or Green only. Do not apply Yellow or Pink to speaker headshots. Other colors are available for decorative or motion assets.'
+        desc: 'Speaker headshots use Purple, Blue, or Green only. Do not apply other colors to speaker headshots. Yellow and Pink are reserved for media and press textural assets.'
     },
     {
         target: '#headshot-section',
         fallback: '#hs-off',
         title: 'HEADSHOT MODE',
-        desc: 'LAYERED (recommended for speakers) — upload a background-removed PNG. The tool composites a clean headshot over the glitch background.\n\nGLITCH ONLY — fully distorts the image. Use for decorative assets only, not speaker slides.'
+        desc: 'LAYERED (recommended for speakers) — upload a background-removed PNG. The tool composites a clean headshot over the glitch background. In Motion mode the background animates while the subject stays sharp.\n\nGLITCH ONLY — fully distorts the image. Use for decorative or textural assets only, not speaker slides.'
     },
     {
         target: '#export-section',
         fallback: '.sidebar-footer',
         title: 'EXPORT',
-        desc: 'Export PNG for static assets at 1x or 2x. For motion, use 1080p or 4K for quick iteration and social. Use 6K for final large-format stage screen sign-off — this takes 5–15 min to encode.'
+        desc: 'Export PNG for static assets at 1x or 2x. For motion, use 1080p or 4K for quick iteration and social content. Use 6K for large screen testing — note this takes 5–15 min to encode.'
     }
 ];
 
@@ -935,18 +935,17 @@ function dismissBanner() {
 function startTour() {
     dismissBanner();
     currentTourStep = 0;
+    document.getElementById('tour-backdrop').style.display = 'block';
     var overlay = document.getElementById('tour-overlay');
     if (overlay) overlay.classList.add('active');
     showTourStep(currentTourStep);
 }
 
 function endTour() {
-    var overlay = document.getElementById('tour-overlay');
-    if (overlay) overlay.classList.remove('active');
-    var highlight = document.getElementById('tour-highlight');
-    if (highlight) highlight.style.display = 'none';
-    var card = document.getElementById('tour-card');
-    if (card) card.style.display = 'none';
+    document.getElementById('tour-overlay').classList.remove('active');
+    document.getElementById('tour-backdrop').style.display = 'none';
+    document.getElementById('tour-highlight').style.display = 'none';
+    document.getElementById('tour-card').style.display = 'none';
 }
 
 function tourStep(dir) {
