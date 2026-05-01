@@ -12,6 +12,18 @@
     <title>BP26 Editor</title>
 
     <style>
+        @font-face {
+            font-family: 'ABCFavoritMono';
+            src: url('/fonts/ABCFavoritMono-Regular.woff') format('woff');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'ABCFavoritMono';
+            src: url('/fonts/ABCFavoritMono-Bold.woff') format('woff');
+            font-weight: 700;
+            font-style: normal;
+        }
         :root {
             --bg-app: #030303;
             --bg-sidebar: #0a0a0a;
@@ -25,7 +37,7 @@
         * { box-sizing: border-box; user-select: none; }
         body, html {
             margin: 0; padding: 0; height: 100%;
-            font-family: 'SF Mono', 'Courier New', Courier, monospace;
+            font-family: 'ABCFavoritMono', 'SF Mono', 'Courier New', Courier, monospace;
             background-color: var(--bg-app); color: var(--text-main);
             font-size: 11px; display: flex; overflow: hidden;
         }
@@ -132,31 +144,30 @@
         </div>
 
         <!-- V2 badge with hover tooltip -->
-        <div style="position:relative;display:inline-block;" id="v2-badge-wrap"
-             onmouseenter="showV2Tip()" onmouseleave="hideV2Tip()">
-            <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--accent);border-radius:2px;cursor:default;">
+        <div style="position:relative;display:inline-block;width:fit-content;" id="v2-badge-wrap">
+            <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid var(--accent);border-radius:2px;cursor:default;" onmouseenter="showV2Tip(event)" onmouseleave="hideV2Tip()">
                 <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
                 <span style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:1.5px;">V3</span>
             </div>
-            <button onclick="retakeTour()" style="background:transparent;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;font-weight:bold;padding:0 0 0 6px;line-height:1;vertical-align:middle;" title="Take the tour">?</button>
-            <div id="v2-tooltip" style="
-                display:none;position:absolute;left:0;top:calc(100% + 8px);
-                width:260px;background:#1a1a1a;border:1px solid var(--border-color);
-                border-radius:2px;padding:12px 14px;z-index:100;
-                box-shadow:0 8px 24px rgba(0,0,0,0.6);">
-                <div style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:2px;margin-bottom:10px;">WHAT'S NEW IN V3</div>
-                <div style="font-size:9px;color:var(--text-muted);line-height:2;">
-                    <div><span style="color:var(--text-main);">High-res import &amp; export</span> — no pixel cap, 1x or 2x PNG at 300 PPI</div>
-                    <div><span style="color:var(--text-main);">Glitch scales to image</span> — consistent look at any resolution</div>
-                    <div><span style="color:var(--text-main);">Arch lighting</span> — high contrast preset for architecture shots</div>
-                    <div><span style="color:var(--text-main);">Video export</span> — type, duration (4s/6s/10s), 1080p, 4K or 6K</div>
-                    <div><span style="color:var(--text-main);">6K export</span> — browser-based encoding, est. 5–15 min, ideal for stage sign-off</div>
-<div><span style="color:var(--text-main);">Headshot layer</span> — composited correctly in all export modes</div>
-                    <div><span style="color:var(--text-main);">P3 preset</span> — P1 at 50% intensity, 0.25 speed for animation</div>
-                </div>
-                <!-- little arrow pointing up -->
-                <div style="position:absolute;top:-5px;left:12px;width:8px;height:8px;background:#1a1a1a;border-left:1px solid var(--border-color);border-top:1px solid var(--border-color);transform:rotate(45deg);"></div>
+        </div>
+        <button onclick="retakeTour()" style="background:transparent;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;font-weight:bold;padding:0 0 0 6px;line-height:1;vertical-align:middle;" title="Take the tour">?</button>
+        <div id="v2-tooltip" style="
+            display:none;position:fixed;left:20px;top:80px;
+            width:260px;background:#1a1a1a;border:1px solid var(--border-color);
+            border-radius:2px;padding:12px 14px;z-index:100;
+            box-shadow:0 8px 24px rgba(0,0,0,0.6);">
+            <div style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:2px;margin-bottom:10px;">WHAT'S NEW IN V3</div>
+            <div style="font-size:9px;color:var(--text-muted);line-height:2;">
+                <div><span style="color:var(--text-main);">High-res import &amp; export</span> — no pixel cap, 1x or 2x PNG at 300 PPI</div>
+                <div><span style="color:var(--text-main);">Glitch scales to image</span> — consistent look at any resolution</div>
+                <div><span style="color:var(--text-main);">Arch lighting</span> — high contrast preset for architecture shots</div>
+                <div><span style="color:var(--text-main);">Video export</span> — type, duration (4s/6s/10s), 1080p, 4K or 6K</div>
+                <div><span style="color:var(--text-main);">6K export</span> — browser-based encoding, est. 5–15 min, ideal for stage sign-off</div>
+                <div><span style="color:var(--text-main);">Headshot layer</span> — composited correctly in all export modes</div>
+                <div><span style="color:var(--text-main);">P3 preset</span> — P1 at 50% intensity, 0.25 speed for animation</div>
             </div>
+            <!-- little arrow pointing up -->
+            <div style="position:absolute;top:-5px;left:12px;width:8px;height:8px;background:#1a1a1a;border-left:1px solid var(--border-color);border-top:1px solid var(--border-color);transform:rotate(45deg);"></div>
         </div>
 
         <!-- 1. ASSET -->
@@ -363,8 +374,14 @@
 </div>
 
 <script>
-function showV2Tip() { document.getElementById('v2-tooltip').style.display = 'block'; }
-function hideV2Tip() { document.getElementById('v2-tooltip').style.display = 'none'; }
+function showV2Tip(e) {
+    var tip = document.getElementById('v2-tooltip');
+    tip.style.display = 'block';
+    e.stopPropagation();
+}
+function hideV2Tip() {
+    document.getElementById('v2-tooltip').style.display = 'none';
+}
 
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d', { willReadFrequently: true });
