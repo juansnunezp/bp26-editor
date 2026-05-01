@@ -178,6 +178,7 @@
             color: var(--text-muted);
             line-height: 1.7;
             margin-bottom: 12px;
+            white-space: pre-wrap;
         }
         #tour-card .tour-buttons {
             display: flex;
@@ -441,8 +442,8 @@
 <!-- TOUR OVERLAY -->
 <div id="tour-overlay">
     <div id="tour-backdrop" onclick="endTour()"></div>
-    <div id="tour-highlight"></div>
-    <div id="tour-card">
+    <div id="tour-highlight" style="display:none;"></div>
+    <div id="tour-card" style="display:none;">
         <div class="tour-step-label" id="tour-step-label">STEP 1 OF 5</div>
         <div class="tour-title" id="tour-title"></div>
         <div class="tour-desc" id="tour-desc"></div>
@@ -920,26 +921,32 @@ var currentTourStep = 0;
 
 function showBannerIfFirstVisit() {
     if (!localStorage.getItem('bp26-tour-dismissed')) {
-        document.getElementById('tour-banner').style.display = 'flex';
+        var banner = document.getElementById('tour-banner');
+        if (banner) banner.style.display = 'flex';
     }
 }
 
 function dismissBanner() {
-    document.getElementById('tour-banner').style.display = 'none';
+    var banner = document.getElementById('tour-banner');
+    if (banner) banner.style.display = 'none';
     localStorage.setItem('bp26-tour-dismissed', '1');
 }
 
 function startTour() {
     dismissBanner();
     currentTourStep = 0;
-    document.getElementById('tour-overlay').classList.add('active');
+    var overlay = document.getElementById('tour-overlay');
+    if (overlay) overlay.classList.add('active');
     showTourStep(currentTourStep);
 }
 
 function endTour() {
-    document.getElementById('tour-overlay').classList.remove('active');
-    document.getElementById('tour-highlight').style.display = 'none';
-    document.getElementById('tour-card').style.display = 'none';
+    var overlay = document.getElementById('tour-overlay');
+    if (overlay) overlay.classList.remove('active');
+    var highlight = document.getElementById('tour-highlight');
+    if (highlight) highlight.style.display = 'none';
+    var card = document.getElementById('tour-card');
+    if (card) card.style.display = 'none';
 }
 
 function tourStep(dir) {
@@ -952,35 +959,49 @@ function tourStep(dir) {
 function showTourStep(index) {
     var step = tourSteps[index];
     var target = document.querySelector(step.target) || document.querySelector(step.fallback);
+    
+    if (!target) {
+        console.warn('Tour target not found:', step.target, step.fallback);
+        if (index < tourSteps.length - 1) {
+            currentTourStep++;
+            showTourStep(currentTourStep);
+        } else {
+            endTour();
+        }
+        return;
+    }
 
-    // Update card content
-    document.getElementById('tour-step-label').innerText = 'STEP ' + (index + 1) + ' OF ' + tourSteps.length;
-    document.getElementById('tour-title').innerText = step.title;
-    document.getElementById('tour-desc').innerText = step.desc;
+    var stepLabelEl = document.getElementById('tour-step-label');
+    if (stepLabelEl) stepLabelEl.innerText = 'STEP ' + (index + 1) + ' OF ' + tourSteps.length;
+    
+    var titleEl = document.getElementById('tour-title');
+    if (titleEl) titleEl.innerText = step.title;
+    
+    var descEl = document.getElementById('tour-desc');
+    if (descEl) descEl.innerText = step.desc;
 
-    // Show/hide back button
-    document.getElementById('tour-back').style.display = index === 0 ? 'none' : 'inline-block';
+    var backBtn = document.getElementById('tour-back');
+    if (backBtn) backBtn.style.display = index === 0 ? 'none' : 'inline-block';
 
-    // Update next button label on last step
-    document.getElementById('tour-next').innerText = index === tourSteps.length - 1 ? 'FINISH ✓' : 'NEXT →';
+    var nextBtn = document.getElementById('tour-next');
+    if (nextBtn) nextBtn.innerText = index === tourSteps.length - 1 ? 'FINISH ✓' : 'NEXT →';
 
-    // Show overlay elements
     var highlight = document.getElementById('tour-highlight');
     var card = document.getElementById('tour-card');
-    highlight.style.display = 'block';
-    card.style.display = 'block';
+    if (highlight) highlight.style.display = 'block';
+    if (card) card.style.display = 'block';
 
-    if (target) {
-        var rect = target.getBoundingClientRect();
-        var padding = 8;
+    var rect = target.getBoundingClientRect();
+    var padding = 8;
 
-        // Position highlight
+    if (highlight) {
         highlight.style.left   = (rect.left - padding) + 'px';
         highlight.style.top    = (rect.top - padding) + 'px';
         highlight.style.width  = (rect.width + padding * 2) + 'px';
         highlight.style.height = (rect.height + padding * 2) + 'px';
+    }
 
-        // Position card — prefer right of highlight, fall back to left
+    if (card) {
         var cardW = 220;
         var cardLeft = rect.right + 16;
         if (cardLeft + cardW > window.innerWidth) {
@@ -995,7 +1016,6 @@ function showTourStep(index) {
     }
 }
 
-// Show banner on load
 showBannerIfFirstVisit();
 
 // Load ffmpeg.wasm in background so it's ready when user exports
