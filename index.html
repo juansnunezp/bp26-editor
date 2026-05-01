@@ -94,11 +94,135 @@
         body.mode-video .motion-note { display: block; }
         /* CHANGE: 4-button lighting row — tighter font/padding */
         .lighting-btn { padding: 8px 2px !important; font-size: 9px !important; }
+        /* ONBOARDING TOUR */
+        #tour-banner {
+            background: var(--accent);
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: default;
+            flex-shrink: 0;
+        }
+        #tour-banner span { flex: 1; }
+        #tour-banner button {
+            background: #000;
+            color: var(--accent);
+            border: none;
+            padding: 4px 10px;
+            font-family: inherit;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-left: 8px;
+            text-transform: uppercase;
+        }
+        #tour-banner .dismiss {
+            background: transparent;
+            color: #000;
+            font-size: 12px;
+            padding: 0 4px;
+            margin-left: 6px;
+        }
+        #tour-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        #tour-overlay.active { pointer-events: all; }
+        #tour-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+        }
+        #tour-highlight {
+            position: absolute;
+            border: 2px solid var(--accent);
+            border-radius: 4px;
+            box-shadow: 0 0 0 4px rgba(170,103,251,0.25), 0 0 30px rgba(170,103,251,0.3);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1002;
+        }
+        #tour-card {
+            position: absolute;
+            width: 220px;
+            background: #1a1a1a;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 14px;
+            z-index: 1003;
+            transition: all 0.3s ease;
+        }
+        #tour-card .tour-step-label {
+            font-size: 9px;
+            color: var(--accent);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+        #tour-card .tour-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        #tour-card .tour-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+        #tour-card .tour-buttons {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #tour-card .tour-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        #tour-card .tour-btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+        #tour-card .tour-skip {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 9px;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 </head>
 <body class="mode-image">
 <div class="sidebar">
+    <!-- ONBOARDING BANNER -->
+    <div id="tour-banner" style="display:none;">
+        <span>✦ NEW TO BP26? TAKE A QUICK TOUR</span>
+        <button onclick="startTour()">START TOUR →</button>
+        <button class="dismiss" onclick="dismissBanner()">✕</button>
+    </div>
     <div class="sidebar-scroll">
         <div class="header-container">
             <svg class="brand-logo" viewBox="0 0 35 27" xmlns="http://www.w3.org/2000/svg">
@@ -137,7 +261,7 @@
         </div>
 
         <!-- 1. ASSET -->
-        <div>
+        <div id="fileInput-wrap">
             <div class="section-title">1. Asset</div>
             <input type="file" id="fileInput" accept="image/*,video/*" style="display:none;">
             <div class="btn btn-upload" style="margin-bottom:6px;" onclick="document.getElementById('fileInput').click()">UPLOAD ASSET</div>
@@ -149,7 +273,7 @@
         </div>
 
         <!-- 2. GLITCH PATTERN -->
-        <div>
+        <div id="panel-glitch-wrap">
             <div class="section-title">2. Glitch Pattern</div>
             <div class="toggle-group" style="margin-bottom:8px;">
                 <div class="btn preset-btn" id="btn-none" onclick="applyPresetWithBase('none')">NONE</div>
@@ -254,7 +378,7 @@
         </div>
 
         <!-- 5. HEADSHOT -->
-        <div>
+        <div id="headshot-section">
             <div class="section-title">5. Headshot</div>
             <div class="mode-toggle-group" style="margin-bottom:10px;">
                 <button class="mode-btn active" id="hs-off" onclick="setHeadshotMode(false)">GLITCH ONLY</button>
@@ -271,7 +395,7 @@
     </div>
 
     <!-- STICKY FOOTER image -->
-    <div class="sidebar-footer image-only">
+    <div class="sidebar-footer image-only" id="export-section">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
             <span style="color:var(--text-muted);font-size:9px;letter-spacing:1px;">EXPORT SCALE</span>
             <div style="display:flex;gap:0;border:1px solid var(--border-color);border-radius:2px;overflow:hidden;">
@@ -311,6 +435,24 @@
         <div id="res-note" style="font-size:9px;color:var(--text-muted);margin-bottom:6px;line-height:1.6;"></div>
         <div class="btn btn-export" style="background:var(--accent);color:#000;border:none;margin-bottom:6px;" onclick="exportVideoSelected()">EXPORT</div>
         <div class="btn btn-export" style="background:var(--text-main);color:#000;border:none;" onclick="exportImage()">EXPORT CURRENT FRAME</div>
+    </div>
+</div>
+
+<!-- TOUR OVERLAY -->
+<div id="tour-overlay">
+    <div id="tour-backdrop" onclick="endTour()"></div>
+    <div id="tour-highlight"></div>
+    <div id="tour-card">
+        <div class="tour-step-label" id="tour-step-label">STEP 1 OF 5</div>
+        <div class="tour-title" id="tour-title"></div>
+        <div class="tour-desc" id="tour-desc"></div>
+        <div class="tour-buttons">
+            <button class="tour-skip" onclick="endTour()">SKIP</button>
+            <div style="display:flex;gap:6px;">
+                <button class="tour-btn tour-btn-secondary" id="tour-back" onclick="tourStep(-1)">← BACK</button>
+                <button class="tour-btn" id="tour-next" onclick="tourStep(1)">NEXT →</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -737,6 +879,124 @@ function initBlank() {
     ctx.fillStyle = '#111'; ctx.fillRect(0, 0, 800, 600);
 }
 initBlank();
+
+// =============================================
+// ONBOARDING TOUR
+// =============================================
+var tourSteps = [
+    {
+        target: '#fileInput-wrap',
+        fallback: '.btn-upload',
+        title: 'UPLOAD YOUR ASSET',
+        desc: 'Start by uploading your image or video. For speaker headshots, remove the background first and crop to 1:1 with the face centered and frame ending around mid-chest.'
+    },
+    {
+        target: '#panel-glitch-wrap',
+        fallback: '.section-title',
+        title: 'GLITCH PATTERN',
+        desc: 'Choose P1 or P2 and adjust intensity. The goal is to abstract the image while keeping enough human structure — hairline, shoulders, silhouette — so it still reads as a person.'
+    },
+    {
+        target: '#tintColors',
+        fallback: '#tintColors',
+        title: 'COLOR',
+        desc: 'Speaker headshots use Purple, Blue, or Green only. Do not apply Yellow or Pink to speaker headshots. Other colors are available for decorative or motion assets.'
+    },
+    {
+        target: '#headshot-section',
+        fallback: '#hs-off',
+        title: 'HEADSHOT MODE',
+        desc: 'LAYERED (recommended for speakers) — upload a background-removed PNG. The tool composites a clean headshot over the glitch background.\n\nGLITCH ONLY — fully distorts the image. Use for decorative assets only, not speaker slides.'
+    },
+    {
+        target: '#export-section',
+        fallback: '.sidebar-footer',
+        title: 'EXPORT',
+        desc: 'Export PNG for static assets at 1x or 2x. For motion, use 1080p or 4K for quick iteration and social. Use 6K for final large-format stage screen sign-off — this takes 5–15 min to encode.'
+    }
+];
+
+var currentTourStep = 0;
+
+function showBannerIfFirstVisit() {
+    if (!localStorage.getItem('bp26-tour-dismissed')) {
+        document.getElementById('tour-banner').style.display = 'flex';
+    }
+}
+
+function dismissBanner() {
+    document.getElementById('tour-banner').style.display = 'none';
+    localStorage.setItem('bp26-tour-dismissed', '1');
+}
+
+function startTour() {
+    dismissBanner();
+    currentTourStep = 0;
+    document.getElementById('tour-overlay').classList.add('active');
+    showTourStep(currentTourStep);
+}
+
+function endTour() {
+    document.getElementById('tour-overlay').classList.remove('active');
+    document.getElementById('tour-highlight').style.display = 'none';
+    document.getElementById('tour-card').style.display = 'none';
+}
+
+function tourStep(dir) {
+    currentTourStep += dir;
+    if (currentTourStep < 0) currentTourStep = 0;
+    if (currentTourStep >= tourSteps.length) { endTour(); return; }
+    showTourStep(currentTourStep);
+}
+
+function showTourStep(index) {
+    var step = tourSteps[index];
+    var target = document.querySelector(step.target) || document.querySelector(step.fallback);
+
+    // Update card content
+    document.getElementById('tour-step-label').innerText = 'STEP ' + (index + 1) + ' OF ' + tourSteps.length;
+    document.getElementById('tour-title').innerText = step.title;
+    document.getElementById('tour-desc').innerText = step.desc;
+
+    // Show/hide back button
+    document.getElementById('tour-back').style.display = index === 0 ? 'none' : 'inline-block';
+
+    // Update next button label on last step
+    document.getElementById('tour-next').innerText = index === tourSteps.length - 1 ? 'FINISH ✓' : 'NEXT →';
+
+    // Show overlay elements
+    var highlight = document.getElementById('tour-highlight');
+    var card = document.getElementById('tour-card');
+    highlight.style.display = 'block';
+    card.style.display = 'block';
+
+    if (target) {
+        var rect = target.getBoundingClientRect();
+        var padding = 8;
+
+        // Position highlight
+        highlight.style.left   = (rect.left - padding) + 'px';
+        highlight.style.top    = (rect.top - padding) + 'px';
+        highlight.style.width  = (rect.width + padding * 2) + 'px';
+        highlight.style.height = (rect.height + padding * 2) + 'px';
+
+        // Position card — prefer right of highlight, fall back to left
+        var cardW = 220;
+        var cardLeft = rect.right + 16;
+        if (cardLeft + cardW > window.innerWidth) {
+            cardLeft = rect.left - cardW - 16;
+        }
+        var cardTop = Math.max(10, rect.top - 10);
+        if (cardTop + 200 > window.innerHeight) {
+            cardTop = window.innerHeight - 220;
+        }
+        card.style.left = cardLeft + 'px';
+        card.style.top  = cardTop + 'px';
+    }
+}
+
+// Show banner on load
+showBannerIfFirstVisit();
 
 // Load ffmpeg.wasm in background so it's ready when user exports
 var ffmpegInstance = null;
