@@ -115,7 +115,7 @@
         #tour-overlay.active { pointer-events:all; }
         #tour-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.75); display:none; }
         #tour-highlight { position:absolute; border:2px solid var(--accent); border-radius:4px; box-shadow:0 0 0 4px rgba(170,103,251,0.25),0 0 30px rgba(170,103,251,0.3); transition:all 0.3s ease; pointer-events:none; z-index:1002; display:none; }
-        #tour-card { position:absolute; width:220px; background:#1a1a1a; border:1px solid var(--accent); border-radius:4px; padding:14px; z-index:1003; transition:all 0.3s ease; display:none; }
+        #tour-card { position:fixed; width:260px; background:#1a1a1a; border:1px solid var(--accent); border-radius:4px; padding:14px; z-index:1003; transition:left 0.3s ease, top 0.3s ease; display:none; max-height:calc(100vh - 40px); overflow-y:auto; box-sizing:border-box; }
         #tour-card .tour-step-label { font-size:9px; color:var(--accent); letter-spacing:2px; margin-bottom:6px; }
         #tour-card .tour-title { font-size:12px; font-weight:bold; color:var(--text-main); margin-bottom:8px; letter-spacing:1px; }
         #tour-card .tour-desc { font-size:10px; color:var(--text-muted); line-height:1.7; margin-bottom:12px; white-space:pre-line; }
@@ -934,23 +934,32 @@ function showTourStep(index) {
     highlight.style.width  = (rect.width + pad*2) + 'px';
     highlight.style.height = (rect.height + pad*2) + 'px';
 
-    var cardW = 220;
-    var cardH = 280;
-    var cardLeft = rect.right + 16;
-    // If card goes off right edge, try left side
-    if (cardLeft + cardW > window.innerWidth) cardLeft = rect.left - cardW - 16;
-    // If card still off screen, pin to right edge with margin
-    if (cardLeft < 0) cardLeft = 10;
-    // Vertical positioning — try to center on element
-    var cardTop = rect.top + (rect.height/2) - (cardH/2);
-    // Keep within viewport
-    cardTop = Math.max(10, cardTop);
-    if (cardTop + cardH > window.innerHeight) cardTop = window.innerHeight - cardH - 10;
-    if (cardTop < 0) cardTop = 10;
+    var cardW = 260;
+    var margin = 16;
+    var viewW = window.innerWidth;
+    var viewH = window.innerHeight;
+
+    // Try right of highlight first, then left
+    var cardLeft = rect.right + margin;
+    if (cardLeft + cardW > viewW - margin) {
+        cardLeft = rect.left - cardW - margin;
+    }
+    // If still off screen, center horizontally
+    if (cardLeft < margin) {
+        cardLeft = Math.max(margin, (viewW - cardW) / 2);
+    }
+
+    // Vertically center on element, keep within viewport
+    var cardTop = rect.top + (rect.height / 2) - 100;
+    cardTop = Math.max(margin, cardTop);
+    var cardMaxH = viewH - 40;
+    if (cardTop + cardMaxH > viewH - margin) {
+        cardTop = margin;
+    }
+
     card.style.left = cardLeft + 'px';
-    card.style.top  = cardTop + 'px';
-    card.style.maxHeight = (window.innerHeight - 20) + 'px';
-    card.style.overflowY = 'auto';
+    card.style.top = cardTop + 'px';
+    card.style.maxHeight = cardMaxH + 'px';
 }
 
 showBannerIfFirstVisit();
