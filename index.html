@@ -153,7 +153,13 @@
                     <span style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:1.5px;">V3</span>
                 </div>
             </div>
-            <button onclick="retakeTour()" style="background:transparent;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;font-weight:bold;padding:0;line-height:1;" title="Take the tour">?</button>
+            <div style="position:relative;display:inline-block;" id="tour-btn-wrap">
+                <button onclick="retakeTour()"
+                    onmouseenter="document.getElementById('tour-btn-tip').style.display='block';this.style.borderColor='var(--accent)';this.style.color='var(--accent)';"
+                    onmouseleave="document.getElementById('tour-btn-tip').style.display='none';this.style.borderColor='var(--border-color)';this.style.color='var(--text-muted)';"
+                    style="background:transparent;border:1px solid var(--border-color);border-radius:50%;width:18px;height:18px;color:var(--text-muted);font-size:9px;cursor:pointer;font-family:inherit;font-weight:bold;padding:0;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;">?</button>
+                <div id="tour-btn-tip" style="display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);background:#1a1a1a;border:1px solid var(--border-color);border-radius:2px;padding:4px 8px;font-size:9px;color:var(--text-muted);white-space:nowrap;z-index:200;letter-spacing:1px;">HELPFUL TOUR</div>
+            </div>
         </div>
         <div id="v2-tooltip" style="
             display:none;position:fixed;left:20px;top:80px;
