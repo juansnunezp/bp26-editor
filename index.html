@@ -862,6 +862,15 @@ function showBannerIfFirstVisit() {
     }
 }
 
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var overlay = document.getElementById('tour-overlay');
+        if (overlay && overlay.classList.contains('active')) {
+            endTour();
+        }
+    }
+});
+
 function dismissBanner() {
     var banner = document.getElementById('tour-banner');
     if (banner) banner.style.display = 'none';
