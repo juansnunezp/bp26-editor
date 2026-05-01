@@ -241,6 +241,7 @@
                 <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
                 <span style="font-size:9px;color:var(--accent);font-weight:bold;letter-spacing:1.5px;">V3</span>
             </div>
+            <button onclick="retakeTour()" style="background:transparent;border:1px solid var(--border-color);border-radius:50%;width:20px;height:20px;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:inherit;font-weight:bold;display:inline-flex;align-items:center;justify-content:center;margin-left:6px;vertical-align:middle;" title="Take the tour">?</button>
             <div id="v2-tooltip" style="
                 display:none;position:absolute;left:0;top:calc(100% + 8px);
                 width:260px;background:#1a1a1a;border:1px solid var(--border-color);
@@ -895,7 +896,7 @@ var tourSteps = [
         target: '#panel-glitch-wrap',
         fallback: '.section-title',
         title: 'GLITCH PATTERN',
-        desc: 'For headshots, use P1 or P2 and adjust intensity. The goal is to abstract the image while keeping enough human structure — hairline, shoulders, silhouette — so it still reads as a person. For architectural shots, P3 is recommended for subtle, slower motion.'
+        desc: 'For headshots, use P1 or P2 and adjust intensity. The goal is to abstract the image while keeping enough human structure — hairline, shoulders, silhouette — so it still reads as a person. For architectural shots, P3 is a good starting point for motion — it runs at a lower intensity and slower speed, though all presets work.'
     },
     {
         target: '#tintColors',
@@ -946,6 +947,13 @@ function endTour() {
     document.getElementById('tour-backdrop').style.display = 'none';
     document.getElementById('tour-highlight').style.display = 'none';
     document.getElementById('tour-card').style.display = 'none';
+}
+
+function retakeTour() {
+    currentTourStep = 0;
+    document.getElementById('tour-backdrop').style.display = 'block';
+    document.getElementById('tour-overlay').classList.add('active');
+    showTourStep(currentTourStep);
 }
 
 function tourStep(dir) {
