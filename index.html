@@ -330,10 +330,8 @@
     <div class="sidebar-footer video-only">
         <div style="color:var(--text-muted);font-size:9px;letter-spacing:1px;margin-bottom:6px;">EXPORT TYPE</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
-            <button id="vtype-loop"     class="mode-btn active" style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('loop')">LOOP</button>
-            <button id="vtype-heal"     class="mode-btn"        style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('heal')">GLITCH→BASE</button>
-            <button id="vtype-displace" class="mode-btn"        style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('displace')">DISPLACE</button>
-            <button id="vtype-full"     class="mode-btn"        style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('full')">FULL VIDEO</button>
+            <button id="vtype-loop" class="mode-btn active" style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('loop')">LOOP</button>
+            <button id="vtype-heal" class="mode-btn"        style="padding:8px 4px;font-size:9px;letter-spacing:1px;border-radius:2px;" onclick="setVideoExportType('heal')">GLITCH→BASE</button>
         </div>
         <div id="dur-picker" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <span style="color:var(--text-muted);font-size:9px;letter-spacing:1px;">DURATION</span>
@@ -455,18 +453,15 @@ function setVideoResolution(res) {
 var videoExportType = 'loop';
 function setVideoExportType(type) {
     videoExportType = type;
-    ['loop','heal','displace','full'].forEach(function(t) {
+    ['loop','heal'].forEach(function(t) {
         document.getElementById('vtype-' + t).classList.toggle('active', t === type);
     });
-    // Hide duration picker for Full Video (uses source duration)
-    document.getElementById('dur-picker').style.display = type === 'full' ? 'none' : 'flex';
+    document.getElementById('dur-picker').style.display = 'flex';
 }
 
 function exportVideoSelected() {
-    if (videoExportType === 'loop')     exportVideoChaos();
-    else if (videoExportType === 'heal')     exportVideoHeal();
-    else if (videoExportType === 'displace') exportVideoDisplaceFlip();
-    else if (videoExportType === 'full')     exportFullVideo();
+    if (videoExportType === 'loop') exportVideoChaos();
+    else if (videoExportType === 'heal') exportVideoHeal();
 }
 
 var cachedTintRGB = [170, 103, 251];
