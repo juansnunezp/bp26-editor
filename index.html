@@ -622,7 +622,10 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
                 vid.play();
                 applyPresetWithBase('p1');
                 hideUploadZone();
-                if (state.previewAnimated) startAnimationLoop();
+                if (state.previewAnimated) {
+                    isAnimLoopRunning = false;
+                    startAnimationLoop();
+                }
             };
         } else {
             var img = new Image();
@@ -643,6 +646,10 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
                 applyPresetWithBase('p1');
                 hideUploadZone();
                 updateExportSizeLabel();
+                if (state.previewAnimated) {
+                    isAnimLoopRunning = false;
+                    startAnimationLoop();
+                }
             };
             img.src = evt.target.result;
         }
