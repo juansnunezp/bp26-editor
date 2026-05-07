@@ -1489,18 +1489,11 @@ function runVideoExportPipeline(ec, orig, mode, p, ep, animGlitchesRef) {
     var fillG = cachedTintRGB ? cachedTintRGB[1] : 103;
     var fillB = cachedTintRGB ? cachedTintRGB[2] : 251;
 
-    // Update source canvas from the preview canvas each frame
-    // (avoids video element dimension issues in offscreen context)
-    if (state.isVideo && state.videoEl && state.videoEl.videoWidth > 0) {
-        var vCtx = ec.src.getContext('2d');
-        vCtx.drawImage(state.videoEl, 0, 0, w, h);
-    } else if (state.isVideo) {
-        // fallback — copy from base canvas if video element not available
-        vCtx = ec.src.getContext('2d');
-        vCtx.drawImage(baseCanvas, 0, 0, w, h);
-    }
-    ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(ec.src, 0,0,w,h);
-    ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(ec.src, 0,0,w,h);
+    // For video: draw from the live preview canvas which already has the current frame
+    // For images: draw from the full-res source as before
+    var drawSrc = (state.isVideo && state.videoEl) ? canvas : ec.src;
+    ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(drawSrc, 0,0,w,h);
+    ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(drawSrc, 0,0,w,h);
 
     var imgData = ec.tCtx.getImageData(0,0,w,h), d = imgData.data;
     var applyColor = state.tint !== 'none' && cachedTintRGB !== null;
@@ -1640,24 +1633,6 @@ function runCCaptureExport(mode, filename) {
     ec.tCtx = ec.tint.getContext('2d',{willReadFrequently:true});
     ec.dCtx = ec.disp.getContext('2d',{willReadFrequently:true});
 
-    // For video: replace ec.src with a live-updating canvas
-    // Video elements have 0 dimensions when drawn to offscreen canvases
-    if (state.isVideo && state.videoEl && state.videoEl.videoWidth > 0) {
-        var snapCanvas = document.createElement('canvas');
-        snapCanvas.width = targetW;
-        snapCanvas.height = targetH;
-        var snapCtx = snapCanvas.getContext('2d');
-        snapCtx.drawImage(state.videoEl, 0, 0, targetW, targetH);
-        ec.src = snapCanvas;
-    } else if (state.isVideo) {
-        // Video element not ready — use base canvas as source
-        var snapCanvas = document.createElement('canvas');
-        snapCanvas.width = targetW;
-        snapCanvas.height = targetH;
-        var snapCtx = snapCanvas.getContext('2d');
-        snapCtx.drawImage(baseCanvas, 0, 0, targetW, targetH);
-        ec.src = snapCanvas;
-    }
     // Init glitches scaled to export canvas size
     var savedW=canvas.width, savedH=canvas.height;
     canvas.width=targetW; canvas.height=targetH;
