@@ -1489,6 +1489,11 @@ function runVideoExportPipeline(ec, orig, mode, p, ep, animGlitchesRef) {
     var fillG = cachedTintRGB ? cachedTintRGB[1] : 103;
     var fillB = cachedTintRGB ? cachedTintRGB[2] : 251;
 
+    // Update source canvas from live video each frame
+    if (state.isVideo && state.videoEl) {
+        var vCtx = ec.src.getContext('2d');
+        vCtx.drawImage(state.videoEl, 0, 0, w, h);
+    }
     ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(ec.src, 0,0,w,h);
     ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(ec.src, 0,0,w,h);
 
@@ -1631,6 +1636,16 @@ function runCCaptureExport(mode, filename) {
     ec.dCtx = ec.disp.getContext('2d',{willReadFrequently:true});
 
     // Init glitches scaled to export canvas size
+    // For video sources, create a snapshot canvas to use as export source
+    // Video elements report 0 width when drawn to offscreen canvases
+    if (state.isVideo && state.videoEl) {
+        var snapCanvas = document.createElement('canvas');
+        snapCanvas.width = targetW;
+        snapCanvas.height = targetH;
+        var snapCtx = snapCanvas.getContext('2d');
+        snapCtx.drawImage(state.videoEl, 0, 0, targetW, targetH);
+        ec.src = snapCanvas;
+    }
     var savedW=canvas.width, savedH=canvas.height;
     canvas.width=targetW; canvas.height=targetH;
     initVideoGlitches();
