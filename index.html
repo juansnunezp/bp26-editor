@@ -1491,15 +1491,6 @@ function runVideoExportPipeline(ec, orig, mode, p, ep, animGlitchesRef) {
 
     ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(ec.src, 0,0,w,h);
     ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(ec.src, 0,0,w,h);
-    // Update source from video each frame if video is playing
-    if (state.isVideo && state.videoEl && state.videoEl.readyState >= 2) {
-        var vSnap = document.createElement('canvas');
-        vSnap.width = w; vSnap.height = h;
-        vSnap.getContext('2d').drawImage(state.videoEl, 0, 0, w, h);
-        ec.src = vSnap;
-        ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(ec.src, 0,0,w,h);
-        ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(ec.src, 0,0,w,h);
-    }
 
     var imgData = ec.tCtx.getImageData(0,0,w,h), d = imgData.data;
     var applyColor = state.tint !== 'none' && cachedTintRGB !== null;
@@ -1627,18 +1618,9 @@ function runCCaptureExport(mode, filename) {
     // Cap to source — never upscale beyond what we have
     if (targetW > srcW || targetH > srcH) { targetW = srcW; targetH = srcH; }
 
-    // Capture current video frame at export resolution before canvas operations begin
-    var videoFrame = null;
-    if (state.isVideo && state.videoEl && state.videoEl.readyState >= 2) {
-        videoFrame = document.createElement('canvas');
-        videoFrame.width = targetW;
-        videoFrame.height = targetH;
-        videoFrame.getContext('2d').drawImage(state.videoEl, 0, 0, targetW, targetH);
-    }
-
     // Build offscreen export canvases using the full-res source
     var ec = {
-        w: targetW, h: targetH, src: (videoFrame || src),
+        w: targetW, h: targetH, src: src,
         main: document.createElement('canvas'), base: document.createElement('canvas'),
         tint: document.createElement('canvas'), disp: document.createElement('canvas')
     };
