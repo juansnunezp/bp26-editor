@@ -1635,9 +1635,8 @@ function runCCaptureExport(mode, filename) {
     ec.tCtx = ec.tint.getContext('2d',{willReadFrequently:true});
     ec.dCtx = ec.disp.getContext('2d',{willReadFrequently:true});
 
-    // Init glitches scaled to export canvas size
-    // For video sources, create a snapshot canvas to use as export source
-    // Video elements report 0 width when drawn to offscreen canvases
+    // For video: replace ec.src with a live-updating canvas
+    // Video elements have 0 dimensions when drawn to offscreen canvases
     if (state.isVideo && state.videoEl) {
         var snapCanvas = document.createElement('canvas');
         snapCanvas.width = targetW;
@@ -1646,6 +1645,7 @@ function runCCaptureExport(mode, filename) {
         snapCtx.drawImage(state.videoEl, 0, 0, targetW, targetH);
         ec.src = snapCanvas;
     }
+    // Init glitches scaled to export canvas size
     var savedW=canvas.width, savedH=canvas.height;
     canvas.width=targetW; canvas.height=targetH;
     initVideoGlitches();
