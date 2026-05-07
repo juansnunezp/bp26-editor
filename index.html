@@ -1489,10 +1489,11 @@ function runVideoExportPipeline(ec, orig, mode, p, ep, animGlitchesRef) {
     var fillG = cachedTintRGB ? cachedTintRGB[1] : 103;
     var fillB = cachedTintRGB ? cachedTintRGB[2] : 251;
 
-    // Update source canvas from live video each frame
-    if (state.isVideo && state.videoEl) {
+    // Update source canvas from the preview canvas each frame
+    // (avoids video element dimension issues in offscreen context)
+    if (state.isVideo) {
         var vCtx = ec.src.getContext('2d');
-        vCtx.drawImage(state.videoEl, 0, 0, w, h);
+        vCtx.drawImage(canvas, 0, 0, w, h);
     }
     ec.bCtx.clearRect(0,0,w,h); ec.bCtx.drawImage(ec.src, 0,0,w,h);
     ec.tCtx.clearRect(0,0,w,h); ec.tCtx.drawImage(ec.src, 0,0,w,h);
